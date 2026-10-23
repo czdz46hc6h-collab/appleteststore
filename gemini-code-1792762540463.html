@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore - Boutique Personnalisable</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f5f5f7;
+      color: #1d1d1f;
+      line-height: 1.5;
+    }
+
+    /* Barre d'administration / Édition */
+    .admin-bar {
+      background: #1d1d1f;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .admin-btn {
+      background: #0071e3;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+
+    .admin-btn.editing {
+      background: #ff3b30;
+    }
+
+    .admin-btn.add-btn {
+      background: #34c759;
+    }
+
+    /* Navigation */
+    header {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 50px;
+      z-index: 900;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    nav {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+    }
+
+    .logo {
+      font-size: 1.3rem;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    .cart-btn {
+      background: #e8e8ed;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cart-count {
+      background: #0071e3;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 50px 20px 30px;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: #86868b;
+      margin-top: 8px;
+    }
+
+    /* Grille de Produits */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 25px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 18px;
+      padding: 25px 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .product-img-wrap {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 15px;
+      position: relative;
+    }
+
+    .product-card img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .change-img-btn {
+      display: none;
+      position: absolute;
+      bottom: 5px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .edit-active .change-img-btn {
+      display: block;
+    }
+
+    .product-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .product-card .desc {
+      color: #86868b;
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+      flex-grow: 1;
+    }
+
+    .product-card .price {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .buy-btn {
+      background: #0071e3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .buy-btn:hover {
+      background: #0077ed;
+    }
+
+    .delete-card-btn {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ff3b30;
+      color: white;
+      border: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .edit-active .delete-card-btn {
+      display: block;
+    }
+
+    /* Style Éditables */
+    [contenteditable="true"] {
+      outline: 2px dashed #0071e3 !important;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: rgba(0, 113, 227, 0.05);
+    }
+
+    /* Modales (Panier / Ajout Produit) */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: white;
+      border-radius: 20px;
+      padding: 25px 30px;
+      width: 100%;
+      max-width: 450px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: #e5e5ea;
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .form-group {
+      margin-top: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #86868b;
+      margin-bottom: 5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d2d2d7;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+
+    .pay-btn {
+      width: 100%;
+      background: #34c759;
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .success-box {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .success-icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barre d'administration -->
+  <div class="admin-bar">
+    <span>⚙️ Mode Édition</span>
+    <div class="admin-actions">
+      <button class="admin-btn add-btn" onclick="openAddModal()">➕ Ajouter un article</button>
+      <button id="toggle-edit-btn" class="admin-btn" onclick="toggleEditMode()">✏️ Modifier le site</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <nav>
+      <div class="logo editable" id="site-logo">TechStore</div>
+      <button class="cart-btn" onclick="openCart()">
+        🛒 Panier <span class="cart-count" id="cart-count">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- Hero Banner -->
+  <section class="hero">
+    <h1 class="editable" id="hero-title">Gamme Pro 2026</h1>
+    <p class="editable" id="hero-subtitle">La technologie d'exception, enfin entre vos mains.</p>
+  </section>
+
+  <!-- Grille des Produits -->
+  <main class="container">
+    <div class="products-grid" id="products-grid">
+      
+      <!-- Article 1 -->
+      <div class="product-card">
+        <button class="delete-card-btn" onclick="deleteProduct(this)">×</button>
+        <div class="product-img-wrap">
+          <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400" alt="Produit">
+          <button class="change-img-btn" onclick="changeImage(this)">Changer l'image</button>
+        </div>
+        <h3 class="editable item-name">Phone 15 Pro</h3>
+        <p class="desc editable">Finition en titane, puce ultra rapide et appareil photo pro.</p>
+        <p class="price"><span class="editable-price item-price">1229</span> €</p>
+        <button class="buy-btn" onclick="addToCartFromCard(this)">Ajouter au panier</button>
+      </div>
+
+      <!-- Article 2 -->
+      <div class="product-card">
+        <button class="delete-card-btn" onclick="deleteProduct(this)">×</button>
+        <div class="product-img-wrap">
+          <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400" alt="Produit">
+          <button class="change-img-btn" onclick="changeImage(this)">Changer l'image</button>
+        </div>
+        <h3 class="editable item-name">Book Pro 16"</h3>
+        <p class="desc editable">Performances extrêmes pour les créateurs et développeurs.</p>
+        <p class="price"><span class="editable-price item-price">2499</span> €</p>
+        <button class="buy-btn" onclick="addToCartFromCard(this)">Ajouter au panier</button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Modale Panier -->
+  <div class="modal" id="cart-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Votre Panier</h2>
+        <button class="close-btn" onclick="closeCart()">×</button>
+      </div>
+
+      <div id="cart-content">
+        <div id="cart-items"></div>
+        <hr style="margin: 15px 0; border: none; border-top: 1px solid #eee;">
+        <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 1.1rem;">
+          <span>Total :</span>
+          <span id="cart-total">0 €</span>
+        </div>
+
+        <!-- Formulaire de Commande Simulé -->
+        <form id="checkout-form" onsubmit="handleFakePay(event)" style="margin-top: 20px;">
+          <h3 style="font-size: 1rem; margin-bottom: 10px;">Informations de livraison et paiement</h3>
+          
+          <div class="form-group">
+            <label>Nom complet</label>
+            <input type="text" placeholder="Jean Dupont" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Numéro de carte (Simulation : saisissez ce que vous voulez)</label>
+            <input type="text" placeholder="4500 0000 0000 0000" required>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+              <label>MM/AA</label>
+              <input type="text" placeholder="12/28" required>
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label>CVC</label>
+              <input type="text" placeholder="123" required>
+            </div>
+          </div>
+
+          <button type="submit" class="pay-btn">Commander et Payer</button>
+        </form>
+      </div>
+
+      <!-- Écran de Confirmation d'achat -->
+      <div id="success-screen" class="success-box" style="display: none;">
+        <div class="success-icon">🎉</div>
+        <h2>Commande validée !</h2>
+        <p style="color: #86868b; margin-top: 10px;">
+          Merci pour votre commande fictive.<br>
+          N° de suivi : <strong id="order-num">#0000</strong>
+        </p>
+        <button class="buy-btn" style="margin-top: 20px;" onclick="resetCartAndClose()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale Ajouter un Article -->
+  <div class="modal" id="add-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Ajouter un article</h2>
+        <button class="close-btn" onclick="closeAddModal()">×</button>
+      </div>
+      <form onsubmit="addNewProduct(event)">
+        <div class="form-group">
+          <label>Nom de l'article</label>
+          <input type="text" id="new-name" placeholder="Ex: AirPods Max" required>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="new-desc" placeholder="Ex: Réduction de bruit active" required>
+        </div>
+        <div class="form-group">
+          <label>Prix (€)</label>
+          <input type="number" id="new-price" placeholder="579" required>
+        </div>
+        <div class="form-group">
+          <label>Lien de l'image (URL Web)</label>
+          <input type="url" id="new-img" placeholder="https://..." required>
+        </div>
+        <button type="submit" class="pay-btn" style="background:#0071e3;">Ajouter à la boutique</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let isEditing = false;
+    let cart = [];
+
+    // Mode Édition
+    function toggleEditMode() {
+      isEditing = !isEditing;
+      const btn = document.getElementById('toggle-edit-btn');
+      const body = document.body;
+      const editables = document.querySelectorAll('.editable, .editable-price');
+
+      if (isEditing) {
+        btn.innerText = "💾 Sauvegarder";
+        btn.classList.add('editing');
+        body.classList.add('edit-active');
+        editables.forEach(el => el.setAttribute('contenteditable', 'true'));
+      } else {
+        btn.innerText = "✏️ Modifier le site";
+        btn.classList.remove('editing');
+        body.classList.remove('edit-active');
+        editables.forEach(el => el.removeAttribute('contenteditable'));
+        saveChanges();
+      }
+    }
+
+    // Sauvegarde dans le navigateur
+    function saveChanges() {
+      const data = {
+        logo: document.getElementById('site-logo').innerHTML,
+        heroTitle: document.getElementById('hero-title').innerHTML,
+        heroSubtitle: document.getElementById('hero-subtitle').innerHTML,
+        grid: document.getElementById('products-grid').innerHTML
+      };
+      localStorage.setItem('techstore_custom_data', JSON.stringify(data));
+      alert('Modifications enregistrées !');
+    }
+
+    // Chargement de la sauvegarde
+    function loadChanges() {
+      const saved = localStorage.getItem('techstore_custom_data');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.logo) document.getElementById('site-logo').innerHTML = data.logo;
+        if (data.heroTitle) document.getElementById('hero-title').innerHTML = data.heroTitle;
+        if (data.heroSubtitle) document.getElementById('hero-subtitle').innerHTML = data.heroSubtitle;
+        if (data.grid) document.getElementById('products-grid').innerHTML = data.grid;
+      }
+    }
+
+    // Changer l'image d'un article
+    function changeImage(btn) {
+      const newUrl = prompt("Entrez l'adresse URL de la nouvelle image :");
+      if (newUrl) {
+        const img = btn.previousElementSibling;
+        img.src = newUrl;
+      }
+    }
+
+    // Supprimer un article
+    function deleteProduct(btn) {
+      if (confirm("Voulez-vous supprimer cet article ?")) {
+        btn.closest('.product-card').remove();
+      }
+    }
+
+    // Ajouter un nouvel article via formulaire
+    function openAddModal() {
+      document.getElementById('add-modal').classList.add('active');
+    }
+
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.remove('active');
+    }
+
+    function addNewProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-name').value;
+      const desc = document.getElementById('new-desc').value;
+      const price = document.getElementById('new-price').value;
+      const imgUrl = document.getElementById('new-img').value;
+
+      const grid = document.getElementById('products-grid');
+      const newCard = document.createElement('div');
+      newCard.className = 'product-card';
+      newCard.innerHTML = `
+        <button class="delete-card-btn" onclick="deleteProduct(this)">×</button>
+        <div class="product-img-wrap">
+          <img src="${imgUrl}" alt="${name}">
+          <button class="change-img-btn" onclick="changeImage(this)">Changer l'image</button>
+        </div>
+        <h3 class="editable item-name">${name}</h3>
+        <p class="desc editable">${desc}</p>
+        <p class="price"><span class="editable-price item-price">${price}</span> €</p>
+        <button class="buy-btn" onclick="addToCartFromCard(this)">Ajouter au panier</button>
+      `;
+
+      grid.appendChild(newCard);
+      closeAddModal();
+      
+      // Réinitialiser formulaire
+      e.target.reset();
+
+      if (isEditing) {
+        newCard.querySelectorAll('.editable, .editable-price').forEach(el => el.setAttribute('contenteditable', 'true'));
+      }
+    }
+
+    // Gestion du Panier
+    function addToCartFromCard(btn) {
+      const card = btn.closest('.product-card');
+      const title = card.querySelector('.item-name').innerText;
+      const priceText = card.querySelector('.item-price').innerText;
+      const price = parseFloat(priceText.replace(/[^0-9.]/g, '')) || 0;
+
+      cart.push({ title, price });
+      updateCartUI();
+      openCart();
+    }
+
+    function updateCartUI() {
+      document.getElementById('cart-count').innerText = cart.length;
+      const container = document.getElementById('cart-items');
+      const totalEl = document.getElementById('cart-total');
+      
+      if (cart.length === 0) {
+        container.innerHTML = '<p style="color: #86868b; text-align: center;">Votre panier est vide.</p>';
+        totalEl.innerText = '0 €';
+        return;
+      }
+
+      let total = 0;
+      container.innerHTML = cart.map((item, index) => {
+        total += item.price;
+        return `
+          <div class="cart-item">
+            <div>
+              <strong>${item.title}</strong>
+            </div>
+            <div>
+              <span>${item.price} €</span>
+              <button onclick="removeFromCart(${index})" style="margin-left:10px; background:none; border:none; color:#ff3b30; cursor:pointer;">Supprimer</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      totalEl.innerText = total + ' €';
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      updateCartUI();
+    }
+
+    function openCart() {
+      document.getElementById('cart-modal').classList.add('active');
+    }
+
+    function closeCart() {
+      document.getElementById('cart-modal').classList.remove('active');
+    }
+
+    // Commande Simulée
+    function handleFakePay(e) {
+      e.preventDefault();
+      if (cart.length === 0) {
+        alert('Votre panier est vide !');
+        return;
+      }
+
+      document.getElementById('cart-content').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+      document.getElementById('order-num').innerText = '#' + Math.floor(100000 + Math.random() * 900000);
+    }
+
+    function resetCartAndClose() {
+      cart = [];
+      updateCartUI();
+      document.getElementById('cart-content').style.display = 'block';
+      document.getElementById('success-screen').style.display = 'none';
+      closeCart();
+    }
+
+    window.onload = loadChanges;
+  </script>
+</body>
+</html>
